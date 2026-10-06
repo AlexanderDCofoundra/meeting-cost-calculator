@@ -290,7 +290,7 @@
 
         const total = attendees * hourlyCost * (minutes / 60);
 
-        result.textContent = total.toLocaleString(undefined, {
+        result.textContent = "£" + total.toLocaleString(undefined, {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2
         });
