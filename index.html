@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Meeting Cost Calculator</title>
+
+  <style>
+    :root {
+      color-scheme: light;
+      --background: #f5f7fb;
+      --surface: #ffffff;
+      --text: #172033;
+      --muted: #5d6678;
+      --border: #d9dfeb;
+      --primary: #3b5bcc;
+      --primary-hover: #2f4caf;
+      --error: #b42318;
+      --result-bg: #eef3ff;
+      --radius: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family:
+        Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      color: var(--text);
+      background: var(--background);
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    main {
+      width: min(100%, 620px);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: 0 12px 32px rgba(23, 32, 51, 0.08);
+      padding: clamp(24px, 5vw, 40px);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.7rem, 4vw, 2.3rem);
+      line-height: 1.15;
+    }
+
+    .intro {
+      margin: 0 0 28px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    form {
+      display: grid;
+      gap: 20px;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+    }
+
+    label {
+      font-weight: 650;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 0.875rem;
+    }
+
+    input {
+      width: 100%;
+      min-height: 48px;
+      padding: 11px 13px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: #fff;
+      color: var(--text);
+      font: inherit;
+    }
+
+    input:focus {
+      outline: 3px solid rgba(59, 91, 204, 0.18);
+      border-color: var(--primary);
+    }
+
+    button {
+      min-height: 48px;
+      border: 0;
+      border-radius: 9px;
+      padding: 12px 18px;
+      background: var(--primary);
+      color: #fff;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: var(--primary-hover);
+    }
+
+    button:focus-visible {
+      outline: 3px solid rgba(59, 91, 204, 0.28);
+      outline-offset: 2px;
+    }
+
+    .message {
+      min-height: 1.4em;
+      margin: -6px 0 0;
+      color: var(--error);
+      font-size: 0.925rem;
+    }
+
+    .result {
+      margin-top: 28px;
+      padding: 22px;
+      border-radius: 12px;
+      background: var(--result-bg);
+    }
+
+    .result-label {
+      margin: 0 0 5px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      font-weight: 650;
+    }
+
+    .result-value {
+      margin: 0;
+      font-size: clamp(1.8rem, 6vw, 2.6rem);
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    @media (max-width: 520px) {
+      body {
+        padding: 14px;
+        place-items: start center;
+      }
+
+      main {
+        padding: 22px 18px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <h1>Meeting Cost Calculator</h1>
+
+    <p class="intro">
+      Enter the number of attendees, the average hourly cost per attendee,
+      and the meeting duration to estimate the total meeting cost.
+    </p>
+
+    <form id="calculator" novalidate>
+      <div class="field">
+        <label for="attendees">Number of attendees</label>
+        <input
+          id="attendees"
+          name="attendees"
+          type="number"
+          min="0"
+          step="1"
+          inputmode="numeric"
+          required
+        >
+        <span class="hint">Enter a whole number of attendees.</span>
+      </div>
+
+      <div class="field">
+        <label for="hourlyCost">Average hourly cost per attendee</label>
+        <input
+          id="hourlyCost"
+          name="hourlyCost"
+          type="number"
+          min="0"
+          step="any"
+          inputmode="decimal"
+          required
+        >
+        <span class="hint">Enter the average cost for one attendee per hour.</span>
+      </div>
+
+      <div class="field">
+        <label for="minutes">Meeting duration in minutes</label>
+        <input
+          id="minutes"
+          name="minutes"
+          type="number"
+          min="0"
+          step="any"
+          inputmode="decimal"
+          required
+        >
+      </div>
+
+      <p id="message" class="message" role="alert" aria-live="polite"></p>
+
+      <button type="submit">Calculate meeting cost</button>
+    </form>
+
+    <section class="result" aria-live="polite" aria-atomic="true">
+      <p class="result-label">Estimated total meeting cost</p>
+      <p id="result" class="result-value">—</p>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const form = document.getElementById("calculator");
+      const attendeesInput = document.getElementById("attendees");
+      const hourlyCostInput = document.getElementById("hourlyCost");
+      const minutesInput = document.getElementById("minutes");
+      const message = document.getElementById("message");
+      const result = document.getElementById("result");
+
+      function clearResult() {
+        result.textContent = "—";
+      }
+
+      function showError(text) {
+        clearResult();
+        message.textContent = text;
+      }
+
+      function readNumber(input) {
+        const raw = input.value.trim();
+
+        if (raw === "") {
+          return null;
+        }
+
+        const value = Number(raw);
+        return Number.isFinite(value) ? value : NaN;
+      }
+
+      function calculate(event) {
+        event.preventDefault();
+        message.textContent = "";
+
+        const attendees = readNumber(attendeesInput);
+        const hourlyCost = readNumber(hourlyCostInput);
+        const minutes = readNumber(minutesInput);
+
+        if (
+          attendees === null ||
+          hourlyCost === null ||
+          minutes === null
+        ) {
+          showError("Complete all three fields before calculating.");
+          return;
+        }
+
+        if (
+          Number.isNaN(attendees) ||
+          Number.isNaN(hourlyCost) ||
+          Number.isNaN(minutes)
+        ) {
+          showError("Enter valid numeric values in all fields.");
+          return;
+        }
+
+        if (
+          attendees < 0 ||
+          hourlyCost < 0 ||
+          minutes < 0
+        ) {
+          showError("Values cannot be negative.");
+          return;
+        }
+
+        if (!Number.isInteger(attendees)) {
+          showError("Number of attendees must be a whole number.");
+          return;
+        }
+
+        const total = attendees * hourlyCost * (minutes / 60);
+
+        result.textContent = total.toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+      }
+
+      form.addEventListener("submit", calculate);
+
+      [attendeesInput, hourlyCostInput, minutesInput].forEach((input) => {
+        input.addEventListener("input", () => {
+          message.textContent = "";
+          clearResult();
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
